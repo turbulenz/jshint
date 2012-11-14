@@ -681,6 +681,7 @@ Lexer.prototype = {
 				case "/*jshint":
 				case "/*jslint":
 				case "/*global":
+				case "/*exported":
 				case "*/":
 					return {
 						value: t,

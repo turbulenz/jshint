@@ -184,6 +184,8 @@ var JSHINT = (function () {
 
 		declared, // Globals that were declared using /*global ... */ syntax.
 
+		exported, // Variables known to be unused declared using /*exported ... */
+
 		funct, // The current function
 
 		functionicity = [
@@ -543,7 +545,8 @@ var JSHINT = (function () {
 		var o  = nt.value;
 		var quotmarkValue = state.option.quotmark;
 		var predef = {};
-		var b, obj, filter, t, tn, v, minus;
+		var exp = {};
+		var b, obj, filter, t, tn, v, minus, key;
 
 		switch (o) {
 		case "*/":
@@ -565,6 +568,9 @@ var JSHINT = (function () {
 			break;
 		case "/*global":
 			obj = predef;
+			break;
+		case "/*exported":
+			obj = exp;
 			break;
 		default:
 			error("E021");
@@ -690,7 +696,13 @@ loop:
 
 		combine(predefined, predef);
 
-		for (var key in predef) {
+		for (key in exp) {
+			if (_.has(exp, key)) {
+				exported[key] = exp[key];
+			}
+		}
+
+		for (key in predef) {
 			if (_.has(predef, key)) {
 				declared[key] = nt;
 			}
@@ -3086,6 +3098,7 @@ loop:
 
 		predefined = Object.create(vars.ecmaIdentifiers);
 		declared = Object.create(null);
+		exported = Object.create(null);
 		combine(predefined, g || {});
 
 		if (o) {
@@ -3280,6 +3293,10 @@ loop:
 
 				// Params are checked separately from other variables.
 				if (func["(params)"] && func["(params)"].indexOf(key) !== -1)
+					return;
+
+				// Expression is in global scope and is exported
+				if (func["(global)"] && _.has(exported, key))
 					return;
 
 				warnUnused(key, tkn);
